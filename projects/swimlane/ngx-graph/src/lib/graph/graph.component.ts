@@ -92,6 +92,7 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
   @Input() center$: Observable<any>;
   @Input() zoomToFit$: Observable<any>;
   @Input() panToNode$: Observable<any>;
+  @Input() transitionStart$: Observable<Node>;
   @Input() layout: string | Layout;
   @Input() layoutSettings: any;
   @Input() enableTrackpadSupport = false;
@@ -151,6 +152,8 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
   height: number;
   resizeSubscription: any;
   visibilityObserver: VisibilityObserver;
+  transitionNode: Node;
+  isTransitioning = false;
 
   constructor(
     private el: ElementRef,
@@ -241,6 +244,14 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
       this.subscriptions.push(
         this.panToNode$.subscribe((nodeId: string) => {
           this.panToNodeId(nodeId);
+        })
+      );
+    }
+
+    if (this.transitionStart$) {
+      this.subscriptions.push(
+        this.transitionStart$.subscribe(node => {
+          this.startTransition(node);
         })
       );
     }
@@ -994,6 +1005,8 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
       this.panWithConstraints(this.panningAxis, $event);
     } else if (this.isDragging && this.draggingEnabled) {
       this.onDrag($event);
+    } else if (this.isTransitioning) {
+      this.handleTransition($event);
     }
   }
 
@@ -1142,6 +1155,32 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
     }
 
     this.panTo(node.position.x, node.position.y);
+  }
+
+  startTransition(node: Node): void {
+    // получить центр ноды и наоисовать от него линию до указателя мыши
+    this.transitionNode = node;
+    this.isTransitioning = true;
+  }
+
+  handleTransition(event: MouseEvent): void {
+    const rect = (this.el.nativeElement as HTMLElement).getBoundingClientRect();
+    const transitionTarget = {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top
+    };
+
+    const line = this.generateLine([
+      {
+        x: this.transitionNode.position.x,
+        y: this.transitionNode.position.y
+      },
+      transitionTarget
+    ]);
+
+    const selection = select('.transition');
+
+    selection.attr('d', line);
   }
 
   private panWithConstraints(key: string, event: MouseEvent) {

@@ -4,6 +4,7 @@
   [links]="links"
   [nodes]="nodes"
   [layout]="layout"
-  [curve]="curve"
+  [transitionStart$]="transitionStart$"
+  (select)="onSelect($event)"
 >
 </ngx-graph>

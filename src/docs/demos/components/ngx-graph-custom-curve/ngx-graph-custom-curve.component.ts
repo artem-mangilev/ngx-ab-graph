@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { Layout, Edge, Node } from '@swimlane/ngx-graph';
+import { Subject } from 'rxjs';
 import { DagreNodesOnlyLayout } from './customDagreNodesOnly';
 import { stepRound } from './customStepCurved';
 
@@ -22,12 +23,6 @@ export class NgxGraphCustomCurve {
       source: 'first',
       target: 'third',
       label: 'custom label'
-    },
-    {
-      id: 'c',
-      source: 'first',
-      target: 'fourth',
-      label: 'custom label'
     }
   ];
   public nodes: Node[] = [
@@ -48,4 +43,10 @@ export class NgxGraphCustomCurve {
       label: 'D'
     }
   ];
+
+  private transitionStart$: Subject<Node> = new Subject();
+
+  onSelect(node: Node): void {
+    this.transitionStart$.next(node);
+  }
 }
