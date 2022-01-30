@@ -35,6 +35,10 @@
 
       <ng-content></ng-content>
 
+      <svg:g>
+        <svg:path class="transition"></svg:path>
+      </svg:g>
+
       <svg:g class="clusters">
         <svg:g
           #clusterElement
@@ -99,10 +103,6 @@
           />
         </svg:g>
       </svg:g>
-    </svg:g>
-
-    <svg:g>
-      <svg:path class="transition"></svg:path>
     </svg:g>
 
     <svg:clipPath [attr.id]="minimapClipPathId">

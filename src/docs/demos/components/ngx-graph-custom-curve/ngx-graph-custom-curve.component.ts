@@ -45,8 +45,16 @@ export class NgxGraphCustomCurve {
   ];
 
   private transitionStart$: Subject<Node> = new Subject();
+  private transitionEnd$: Subject<Node> = new Subject();
+  private isTransitioning: boolean = false;
 
   onSelect(node: Node): void {
-    this.transitionStart$.next(node);
+    if (!this.isTransitioning) {
+      this.transitionStart$.next(node);
+      this.isTransitioning = true;
+    } else {
+      this.transitionEnd$.next(node);
+      this.isTransitioning = false;
+    }
   }
 }

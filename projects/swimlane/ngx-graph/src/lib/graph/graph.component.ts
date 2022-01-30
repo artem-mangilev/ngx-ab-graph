@@ -93,6 +93,7 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
   @Input() zoomToFit$: Observable<any>;
   @Input() panToNode$: Observable<any>;
   @Input() transitionStart$: Observable<Node>;
+  @Input() transitionEnd$: Observable<any>;
   @Input() layout: string | Layout;
   @Input() layoutSettings: any;
   @Input() enableTrackpadSupport = false;
@@ -252,6 +253,14 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
       this.subscriptions.push(
         this.transitionStart$.subscribe(node => {
           this.startTransition(node);
+        })
+      );
+    }
+
+    if (this.transitionEnd$) {
+      this.subscriptions.push(
+        this.transitionEnd$.subscribe(node => {
+          this.endTransition(node);
         })
       );
     }
@@ -1181,6 +1190,28 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
     const selection = select('.transition');
 
     selection.attr('d', line);
+  }
+
+  endTransition(targetNode: Node): void {
+    if (this.transitionNode === targetNode) {
+      return;
+    }
+
+    // добавить новый edge в links
+    this.links.push({
+      source: this.transitionNode.id,
+      target: targetNode.id
+    });
+
+    // обновить граф с учётом нового edge
+    this.update();
+
+    // убрать линию transition
+    const selection = select('.transition');
+    selection.attr('d', null);
+
+    // обнулить isTransitioning
+    this.isTransitioning = false;
   }
 
   private panWithConstraints(key: string, event: MouseEvent) {
