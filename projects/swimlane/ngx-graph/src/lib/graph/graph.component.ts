@@ -53,6 +53,11 @@ export interface Matrix {
   f: number;
 }
 
+export interface TransitionEndCallbacks {
+  create(): Edge;
+  decline(): void;
+}
+
 @Component({
   selector: 'ngx-graph',
   styleUrls: ['./graph.component.scss'],
@@ -93,7 +98,6 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
   @Input() zoomToFit$: Observable<any>;
   @Input() panToNode$: Observable<any>;
   @Input() transitionStart$: Observable<Node>;
-  @Input() transitionEnd$: Observable<any>;
   @Input() layout: string | Layout;
   @Input() layoutSettings: any;
   @Input() enableTrackpadSupport = false;
@@ -111,6 +115,7 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
   @Output() deactivate: EventEmitter<any> = new EventEmitter();
   @Output() zoomChange: EventEmitter<number> = new EventEmitter();
   @Output() clickHandler: EventEmitter<MouseEvent> = new EventEmitter();
+  @Output() transitionEnd: EventEmitter<TransitionEndCallbacks> = new EventEmitter();
 
   @ContentChild('linkTemplate') linkTemplate: TemplateRef<any>;
   @ContentChild('nodeTemplate') nodeTemplate: TemplateRef<any>;
@@ -253,14 +258,6 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
       this.subscriptions.push(
         this.transitionStart$.subscribe(node => {
           this.startTransition(node);
-        })
-      );
-    }
-
-    if (this.transitionEnd$) {
-      this.subscriptions.push(
-        this.transitionEnd$.subscribe(node => {
-          this.endTransition(node);
         })
       );
     }
@@ -928,8 +925,29 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
    *
    * @memberOf GraphComponent
    */
-  onClick(event: any): void {
-    this.select.emit(event);
+  onClick(node: Node): void {
+    // we don't consider click on node in transitioning mode as selecting
+    if (this.isTransitioning) {
+      const isSameNode = () => node === this.transitionNode;
+      const isExistingEdge = () =>
+        !!this.links.find(edge => edge.source === this.transitionNode.id && edge.target === node.id);
+
+      // we cannot create transition to the same node and if this transition already exists
+      if (isSameNode() || isExistingEdge()) {
+        this.abortTransition();
+        return;
+      }
+
+      const callbacks: TransitionEndCallbacks = {
+        create: this.createTransition.bind(this, node),
+        decline: this.abortTransition.bind(this)
+      };
+
+      this.transitionEnd.emit(callbacks);
+      this.isTransitioning = false;
+    } else {
+      this.select.emit(node);
+    }
   }
 
   /**
@@ -1024,9 +1042,19 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
     this.isMouseMoveCalled = false;
   }
 
-  @HostListener('document:click', ['$event'])
+  @HostListener('click', ['$event'])
   graphClick(event: MouseEvent): void {
-    if (!this.isMouseMoveCalled) this.clickHandler.emit(event);
+    if (!this.isMouseMoveCalled) {
+      this.clickHandler.emit(event);
+    }
+
+    if (this.isTransitioning) {
+      const isClickOutsideNode = () => !(event.target as HTMLElement).closest('.node-group');
+
+      if (isClickOutsideNode()) {
+        this.abortTransition();
+      }
+    }
   }
 
   /**
@@ -1192,20 +1220,23 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
     selection.attr('d', line);
   }
 
-  endTransition(targetNode: Node): void {
-    if (this.transitionNode === targetNode) {
-      return;
-    }
-
-    // добавить новый edge в links
-    this.links.push({
+  createTransition(targetNode: Node): Edge {
+    const newEdge: Edge = {
       source: this.transitionNode.id,
       target: targetNode.id
-    });
+    };
+    // добавить новый edge в links
+    this.links.push(newEdge);
 
     // обновить граф с учётом нового edge
     this.update();
 
+    this.abortTransition();
+
+    return newEdge;
+  }
+
+  abortTransition(): void {
     // убрать линию transition
     const selection = select('.transition');
     selection.attr('d', null);

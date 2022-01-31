@@ -5,7 +5,7 @@
   [nodes]="nodes"
   [layout]="layout"
   [transitionStart$]="transitionStart$"
-  [transitionEnd$]="transitionEnd$"
+  (transitionEnd)="onTransitionEnd($event)"
   (select)="onSelect($event)"
 >
 </ngx-graph>
