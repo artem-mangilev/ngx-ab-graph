@@ -86,6 +86,7 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
   @Input() panningEnabled: boolean = true;
   @Input() panningAxis: PanningAxis = PanningAxis.Both;
   @Input() enableZoom = true;
+  @Input() enableTransition = false;
   @Input() zoomSpeed = 0.1;
   @Input() minZoomLevel = 0.1;
   @Input() maxZoomLevel = 4.0;
@@ -254,7 +255,7 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
       );
     }
 
-    if (this.transitionStart$) {
+    if (this.enableTransition && this.transitionStart$) {
       this.subscriptions.push(
         this.transitionStart$.subscribe(node => {
           this.startTransition(node);
@@ -878,25 +879,7 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
     const y = node.position.y - node.dimension.height / 2;
     node.transform = `translate(${x}, ${y})`;
 
-    for (const link of this.graph.edges) {
-      if (
-        link.target === node.id ||
-        link.source === node.id ||
-        (link.target as any).id === node.id ||
-        (link.source as any).id === node.id
-      ) {
-        if (this.layout && typeof this.layout !== 'string') {
-          const result = this.layout.updateEdge(this.graph, link);
-          const result$ = result instanceof Observable ? result : of(result);
-          this.graphSubscription.add(
-            result$.subscribe(graph => {
-              this.graph = graph;
-              this.redrawEdge(link);
-            })
-          );
-        }
-      }
-    }
+    this.updateEdges(node);
 
     this.redrawLines(false);
     this.updateMinimap();
@@ -927,7 +910,7 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
    */
   onClick(node: Node): void {
     // we don't consider click on node in transitioning mode as selecting
-    if (this.isTransitioning) {
+    if (this.enableTransition && this.isTransitioning) {
       const isSameNode = () => node === this.transitionNode;
       const isExistingEdge = () =>
         !!this.links.find(edge => edge.source === this.transitionNode.id && edge.target === node.id);
@@ -1032,7 +1015,7 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
       this.panWithConstraints(this.panningAxis, $event);
     } else if (this.isDragging && this.draggingEnabled) {
       this.onDrag($event);
-    } else if (this.isTransitioning) {
+    } else if (this.enableTransition && this.isTransitioning) {
       this.handleTransition($event);
     }
   }
@@ -1048,7 +1031,7 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
       this.clickHandler.emit(event);
     }
 
-    if (this.isTransitioning) {
+    if (this.enableTransition && this.isTransitioning) {
       const isClickOutsideNode = () => !(event.target as HTMLElement).closest('.node-group');
 
       if (isClickOutsideNode()) {
@@ -1226,10 +1209,15 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
       target: targetNode.id
     };
     // добавить новый edge в links
-    this.links.push(newEdge);
+    this.graph.edges.push(newEdge);
 
     // обновить граф с учётом нового edge
-    this.update();
+    this.updateEdges(this.transitionNode);
+
+    // maybe this is useless
+    this.redrawLines(false);
+
+    this.updateMinimap();
 
     this.abortTransition();
 
@@ -1329,6 +1317,28 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
     }
 
     return null;
+  }
+
+  private updateEdges(node: Node): void {
+    for (const link of this.graph.edges) {
+      if (
+        link.target === node.id ||
+        link.source === node.id ||
+        (link.target as any).id === node.id ||
+        (link.source as any).id === node.id
+      ) {
+        if (this.layout && typeof this.layout !== 'string') {
+          const result = this.layout.updateEdge(this.graph, link);
+          const result$ = result instanceof Observable ? result : of(result);
+          this.graphSubscription.add(
+            result$.subscribe(graph => {
+              this.graph = graph;
+              this.redrawEdge(link);
+            })
+          );
+        }
+      }
+    }
   }
 
   protected unbindEvents(): void {

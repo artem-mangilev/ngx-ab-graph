@@ -51,6 +51,6 @@ export class NgxGraphCustomCurve {
   }
 
   onTransitionEnd(callbacks: TransitionEndCallbacks) {
-    callbacks.create();
+    console.log(callbacks.create());
   }
 }
