@@ -1,10 +1,10 @@
 {
-  "name": "@swimlane/ngx-graph",
-  "version": "8.0.0",
+  "name": "ngx-ab-graph",
+  "version": "0.1.0",
   "description": "Graph visualization for angular",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/swimlane/ngx-graph.git"
+    "url": "git+https://github.com/artem-mangilev/ngx-ab-graph"
   },
   "keywords": [
     "angular",
@@ -20,6 +20,7 @@
   ],
   "author": "Swimlane",
   "maintainers": [
+    "Artem Mangilev",
     "Marjan Georgiev",
     "Assaf Shemesh"
   ],
