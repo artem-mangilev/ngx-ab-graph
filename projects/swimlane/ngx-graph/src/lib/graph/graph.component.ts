@@ -53,7 +53,13 @@ export interface Matrix {
   f: number;
 }
 
-export interface TransitionEndCallbacks {
+export interface TransitionStart {
+  start(): void;
+  decline(): void;
+  nodeEvent: MouseEvent;
+}
+
+export interface TransitionEnd {
   create(): Edge;
   decline(): void;
 }
@@ -98,7 +104,6 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
   @Input() center$: Observable<any>;
   @Input() zoomToFit$: Observable<any>;
   @Input() panToNode$: Observable<any>;
-  @Input() transitionStart$: Observable<Node>;
   @Input() layout: string | Layout;
   @Input() layoutSettings: any;
   @Input() enableTrackpadSupport = false;
@@ -116,7 +121,8 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
   @Output() deactivate: EventEmitter<any> = new EventEmitter();
   @Output() zoomChange: EventEmitter<number> = new EventEmitter();
   @Output() clickHandler: EventEmitter<MouseEvent> = new EventEmitter();
-  @Output() transitionEnd: EventEmitter<TransitionEndCallbacks> = new EventEmitter();
+  @Output() transitionStart: EventEmitter<TransitionStart> = new EventEmitter();
+  @Output() transitionEnd: EventEmitter<TransitionEnd> = new EventEmitter();
 
   @ContentChild('linkTemplate') linkTemplate: TemplateRef<any>;
   @ContentChild('nodeTemplate') nodeTemplate: TemplateRef<any>;
@@ -251,14 +257,6 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
       this.subscriptions.push(
         this.panToNode$.subscribe((nodeId: string) => {
           this.panToNodeId(nodeId);
-        })
-      );
-    }
-
-    if (this.enableTransition && this.transitionStart$) {
-      this.subscriptions.push(
-        this.transitionStart$.subscribe(node => {
-          this.startTransition(node);
         })
       );
     }
@@ -908,26 +906,24 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
    *
    * @memberOf GraphComponent
    */
-  onClick(node: Node): void {
+  onClick(node: Node, event: MouseEvent): void {
     // we don't consider click on node in transitioning mode as selecting
     if (this.enableTransition && this.isTransitioning) {
-      const isSameNode = () => node === this.transitionNode;
-      const isExistingEdge = () =>
-        !!this.links.find(edge => edge.source === this.transitionNode.id && edge.target === node.id);
-
-      // we cannot create transition to the same node and if this transition already exists
-      if (isSameNode() || isExistingEdge()) {
-        this.abortTransition();
-        return;
-      }
-
-      const callbacks: TransitionEndCallbacks = {
+      const end: TransitionEnd = {
         create: this.createTransition.bind(this, node),
         decline: this.abortTransition.bind(this)
       };
 
-      this.transitionEnd.emit(callbacks);
+      this.transitionEnd.emit(end);
       this.isTransitioning = false;
+    } else if (this.enableTransition && !this.isTransitioning) {
+      const start: TransitionStart = {
+        start: this.startTransition.bind(this, node),
+        decline: this.declineStartTransition.bind(this, node),
+        nodeEvent: event
+      };
+
+      this.transitionStart.emit(start);
     } else {
       this.select.emit(node);
     }
@@ -1178,9 +1174,13 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
   }
 
   startTransition(node: Node): void {
-    // получить центр ноды и наоисовать от него линию до указателя мыши
     this.transitionNode = node;
     this.isTransitioning = true;
+  }
+
+  declineStartTransition(node: Node): void {
+    // default selecting behavior if user declined transition
+    this.select.emit(node);
   }
 
   handleTransition(event: MouseEvent): void {
@@ -1204,6 +1204,11 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
   }
 
   createTransition(targetNode: Node): Edge {
+    if (targetNode === this.transitionNode) {
+      this.abortTransition();
+      return;
+    }
+
     const newEdge: Edge = {
       source: this.transitionNode.id,
       target: targetNode.id
