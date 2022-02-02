@@ -1204,7 +1204,12 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
   }
 
   createTransition(targetNode: Node): Edge {
-    if (targetNode === this.transitionNode) {
+    const isExistingEdge = () =>
+      !!this.graph.edges.find(edge => edge.source === this.transitionNode.id && edge.target === targetNode.id);
+
+    const isSameNode = () => this.transitionNode === targetNode;
+
+    if (isSameNode() || isExistingEdge()) {
       this.abortTransition();
       return;
     }
