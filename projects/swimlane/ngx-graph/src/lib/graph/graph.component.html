@@ -47,7 +47,7 @@
           [class.old-node]="animate && oldClusters.has(node.id)"
           [id]="node.id"
           [attr.transform]="node.transform"
-          (click)="onClick(node)"
+          (click)="onClick(node, $event)"
         >
           <ng-container
             *ngIf="clusterTemplate"
