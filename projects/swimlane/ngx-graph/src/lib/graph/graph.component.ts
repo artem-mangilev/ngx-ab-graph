@@ -167,6 +167,8 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
   visibilityObserver: VisibilityObserver;
   transitionNode: Node;
   isTransitioning = false;
+  svgElement: SVGSVGElement;
+  svgChartElement: SVGGElement;
 
   constructor(
     private el: ElementRef,
@@ -318,6 +320,9 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
    * @memberOf GraphComponent
    */
   ngAfterViewInit(): void {
+    this.svgElement = this.el.nativeElement.querySelector('svg');
+    this.svgChartElement = this.svgElement.querySelector('g.chart');
+
     this.bindWindowResizeEvent();
 
     // listen for visibility of the element for hidden by default scenario
@@ -1184,18 +1189,17 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
   }
 
   handleTransition(event: MouseEvent): void {
-    const rect = (this.el.nativeElement as HTMLElement).getBoundingClientRect();
-    const transitionTarget = {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top
-    };
+    const point = this.svgElement.createSVGPoint();
+    point.x = event.clientX;
+    point.y = event.clientY;
+    const svgPoint = point.matrixTransform(this.svgChartElement.getScreenCTM().inverse());
 
     const line = this.generateLine([
       {
         x: this.transitionNode.position.x,
         y: this.transitionNode.position.y
       },
-      transitionTarget
+      svgPoint
     ]);
 
     const selection = select('.transition');
