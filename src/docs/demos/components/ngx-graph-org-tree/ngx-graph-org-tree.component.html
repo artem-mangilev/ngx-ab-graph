@@ -1,14 +1,14 @@
 <ngx-graph
   [view]="[800, 500]"
+  [enableTransition]="true"
   [links]="links"
   [nodes]="nodes"
-  [curve]="curve"
-  [layout]="layout"
-  [nodeWidth]="150"
-  [nodeHeight]="100"
   [layoutSettings]="layoutSettings"
   [enableZoom]="true"
   [autoZoom]="true"
+  (select)="onSelect($event)"
+  (transitionStart)="onTransitionStart($event)"
+  (transitionEnd)="onTransitionEnd($event)"
 >
   <ng-template #defsTemplate>
     <svg:marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
@@ -30,25 +30,7 @@
 
   <ng-template #linkTemplate let-link>
     <svg:g class="edge">
-      <svg:path class="line" stroke-width="2" marker-end="url(#arrow)"></svg:path>
-      <svg:text class="edge-label" text-anchor="middle">
-        <textPath
-          class="text-path"
-          [attr.href]="'#' + link.id"
-          [style.dominant-baseline]="link.dominantBaseline"
-          startOffset="50%"
-        >
-          {{ link.label }}
-        </textPath>
-      </svg:text>
-    </svg:g>
-    <svg:g
-      class="linkMidpoint"
-      *ngIf="link.midPoint"
-      [attr.transform]="'translate(' + link.midPoint.x + ',' + link.midPoint.y + ')'"
-    >
-      <ellipse rx="30" ry="10" />
-      <svg:text alignment-baseline="central">{{ link.data.linkText }}</svg:text>
+      <svg:path class="line" stroke-width="2" [attr.d]="link.line"></svg:path>
     </svg:g>
   </ng-template>
 </ngx-graph>

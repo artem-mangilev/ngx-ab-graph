@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Layout, Edge, Node, TransitionEndCallbacks } from '@swimlane/ngx-graph';
+import { Layout, Edge, Node, TransitionEnd } from '@swimlane/ngx-graph';
 import { Subject } from 'rxjs';
 import { DagreNodesOnlyLayout } from './customDagreNodesOnly';
 import { stepRound } from './customStepCurved';
@@ -50,7 +50,7 @@ export class NgxGraphCustomCurve {
     this.transitionStart$.next(node);
   }
 
-  onTransitionEnd(callbacks: TransitionEndCallbacks) {
+  onTransitionEnd(callbacks: TransitionEnd) {
     console.log(callbacks.create());
   }
 }

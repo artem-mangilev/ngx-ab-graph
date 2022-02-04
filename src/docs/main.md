@@ -20,13 +20,8 @@ ngx-graph is a graph visualization library for Angular
     {
       id: 'a',
       source: 'first',
-    target: 'second',
+      target: 'second',
       label: 'is parent of'
-    }, {
-      id: 'b',
-      source: 'first',
-      target: 'third',
-      label: 'custom label'
     }
   ]"
   [nodes]="[

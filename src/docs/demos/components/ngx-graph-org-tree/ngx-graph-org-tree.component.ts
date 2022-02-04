@@ -1,7 +1,9 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { Edge, Node, Layout } from '@swimlane/ngx-graph';
+import { Edge, Node, Layout, TransitionEnd, TransitionStart } from '@swimlane/ngx-graph';
 import { DagreNodesOnlyLayout } from './customDagreNodesOnly';
 import * as shape from 'd3-shape';
+import { Subject } from 'rxjs';
+import { CLIENT_RENEG_LIMIT } from 'tls';
 
 export class Employee {
   id: string;
@@ -72,6 +74,22 @@ export class NgxGraphOrgTreeComponent implements OnInit {
     ];
   }
 
+  onSelect(node: Node): void {
+    console.log(`node selected: ${node}`);
+  }
+
+  onTransitionStart(transition: TransitionStart): void {
+    // if ((transition.nodeEvent.target as HTMLElement).classList.contains('name')) {
+    transition.start();
+    // } else {
+    //   transition.decline();
+    // }
+  }
+
+  onTransitionEnd(callbacks: TransitionEnd) {
+    console.log(callbacks.create());
+  }
+
   public ngOnInit(): void {
     for (const employee of this.employees) {
       const node: Node = {
@@ -87,22 +105,22 @@ export class NgxGraphOrgTreeComponent implements OnInit {
       this.nodes.push(node);
     }
 
-    for (const employee of this.employees) {
-      if (!employee.upperManagerId) {
-        continue;
-      }
+    // for (const employee of this.employees) {
+    //   if (!employee.upperManagerId) {
+    //     continue;
+    //   }
 
-      const edge: Edge = {
-        source: employee.upperManagerId,
-        target: employee.id,
-        label: '',
-        data: {
-          linkText: 'Manager of'
-        }
-      };
+    //   const edge: Edge = {
+    //     source: employee.upperManagerId,
+    //     target: employee.id,
+    //     label: '',
+    //     data: {
+    //       linkText: 'Manager of'
+    //     }
+    //   };
 
-      this.links.push(edge);
-    }
+    //   this.links.push(edge);
+    // }
   }
 
   public getStyles(node: Node): any {
