@@ -60,6 +60,8 @@ export interface TransitionStart {
 }
 
 export interface TransitionEnd {
+  sourceNode: Node;
+  targetNode: Node;
   create(): Edge;
   decline(): void;
 }
@@ -915,6 +917,8 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
     // we don't consider click on node in transitioning mode as selecting
     if (this.enableTransition && this.isTransitioning) {
       const end: TransitionEnd = {
+        sourceNode: this.transitionNode,
+        targetNode: node,
         create: this.createTransition.bind(this, node),
         decline: this.abortTransition.bind(this)
       };
