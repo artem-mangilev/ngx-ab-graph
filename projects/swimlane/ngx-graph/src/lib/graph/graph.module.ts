@@ -4,12 +4,12 @@ import { MouseWheelDirective } from './mouse-wheel.directive';
 import { LayoutService } from './layouts/layout.service';
 import { CommonModule } from '@angular/common';
 import { VisibilityObserver } from '../utils/visibility-observer';
-import { DndClickDirective } from '../utils/dnd-click.directive';
+import { DndArbitratorDirective } from '../utils/dnd-arbitrator.directive';
 export { GraphComponent };
 
 @NgModule({
   imports: [CommonModule],
-  declarations: [GraphComponent, MouseWheelDirective, VisibilityObserver, DndClickDirective],
+  declarations: [GraphComponent, MouseWheelDirective, VisibilityObserver, DndArbitratorDirective],
   exports: [GraphComponent, MouseWheelDirective],
   providers: [LayoutService]
 })

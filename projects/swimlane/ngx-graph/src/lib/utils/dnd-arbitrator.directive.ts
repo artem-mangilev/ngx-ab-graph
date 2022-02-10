@@ -1,9 +1,12 @@
 import { Directive, EventEmitter, HostListener, Output } from '@angular/core';
 
-@Directive({ selector: '[dndClick]' })
-export class DndClickDirective {
-  @Output('dndClick')
-  public dndClick: EventEmitter<MouseEvent> = new EventEmitter<MouseEvent>();
+@Directive({ selector: '[dndArbitratorClick], [dndArbitratorDrop]' })
+export class DndArbitratorDirective {
+  @Output('dndArbitratorClick')
+  public click = new EventEmitter<MouseEvent>();
+
+  @Output('dndArbitratorDrop')
+  public drop = new EventEmitter<MouseEvent>();
 
   private readonly _delta: number = 6;
 
@@ -30,7 +33,9 @@ export class DndClickDirective {
     const diffY: number = Math.abs(event.pageY - this._startY);
 
     if (diffX < this._delta && diffY < this._delta) {
-      this.dndClick.emit(event);
+      this.click.emit(event);
+    } else {
+      this.drop.emit(event);
     }
   }
 }

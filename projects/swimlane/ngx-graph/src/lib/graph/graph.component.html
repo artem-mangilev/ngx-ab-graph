@@ -86,8 +86,8 @@
           [class.old-node]="animate && oldNodes.has(node.id)"
           [id]="node.id"
           [attr.transform]="node.transform"
-          (dndClick)="onClick(node, $event)"
-          (mouseup)="onNodeMouseUp($event, node)"
+          (dndArbitratorClick)="onClick(node, $event)"
+          (dndArbitratorDrop)="onNodeMouseUp($event, node)"
           (mousedown)="onNodeMouseDown($event, node)"
         >
           <ng-container
