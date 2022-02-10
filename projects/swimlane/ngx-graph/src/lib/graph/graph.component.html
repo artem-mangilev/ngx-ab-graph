@@ -87,6 +87,7 @@
           [id]="node.id"
           [attr.transform]="node.transform"
           (dndClick)="onClick(node, $event)"
+          (mouseup)="onNodeMouseUp($event, node)"
           (mousedown)="onNodeMouseDown($event, node)"
         >
           <ng-container

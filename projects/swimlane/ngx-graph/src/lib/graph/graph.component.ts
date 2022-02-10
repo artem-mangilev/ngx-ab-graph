@@ -1096,8 +1096,11 @@ export class GraphComponent implements OnInit, OnChanges, OnDestroy, AfterViewIn
     this.isDragging = false;
     this.isPanning = false;
     this.isMinimapPanning = false;
+  }
+
+  onNodeMouseUp(event: MouseEvent, node: Node) {
     if (this.layout && typeof this.layout !== 'string' && this.layout.onDragEnd) {
-      this.layout.onDragEnd(this.draggingNode, event);
+      this.layout.onDragEnd(node, event);
     }
   }
 
